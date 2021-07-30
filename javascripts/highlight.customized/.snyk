@@ -1,0 +1,42 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.21.5
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  'npm:hawk:20160119':
+    - gear-lib > less > request > hawk:
+        patched: '2021-07-30T20:30:14.302Z'
+  'npm:http-signature:20150122':
+    - gear-lib > less > request > http-signature:
+        patched: '2021-07-30T20:30:14.302Z'
+  'npm:mime:20170907':
+    - gear-lib > mime:
+        patched: '2021-07-30T20:30:14.302Z'
+    - gear-lib > less > mime:
+        patched: '2021-07-30T20:30:14.302Z'
+    - gear-lib > less > request > form-data > mime:
+        patched: '2021-07-30T20:30:14.302Z'
+  'npm:minimatch:20160620':
+    - gear > liftoff > findup-sync > glob > minimatch:
+        patched: '2021-07-30T20:30:14.302Z'
+    - gear-lib > gear > liftoff > findup-sync > glob > minimatch:
+        patched: '2021-07-30T20:30:14.302Z'
+    - gear-lib > glob > minimatch:
+        patched: '2021-07-30T20:30:14.302Z'
+    - gear-lib > jslint > glob > minimatch:
+        patched: '2021-07-30T20:30:14.302Z'
+    - gear-lib > jshint > cli > glob > minimatch:
+        patched: '2021-07-30T20:30:14.302Z'
+    - gear-lib > jshint > minimatch:
+        patched: '2021-07-30T20:30:14.302Z'
+  'npm:request:20160119':
+    - gear-lib > less > request:
+        patched: '2021-07-30T20:30:14.302Z'
+  'npm:tunnel-agent:20170305':
+    - gear-lib > less > request > tunnel-agent:
+        patched: '2021-07-30T20:30:14.302Z'
+  'npm:uglify-js:20151024':
+    - gear-lib > handlebars > uglify-js:
+        patched: '2021-07-30T20:30:14.302Z'
+    - gear-lib > uglify-js:
+        patched: '2021-07-30T20:30:14.302Z'
