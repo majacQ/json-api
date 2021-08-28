@@ -22,7 +22,9 @@
   },
   "main": "./lib/index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha test/"
+    "test": "./node_modules/.bin/mocha test/",
+    "prepublish": "npm run snyk-protect",
+    "snyk-protect": "snyk-protect"
   },
   "engines": {
     "node": "*"
@@ -38,5 +40,9 @@
     "lodash": "^3.3.1",
     "mocha": "^2.0.1",
     "should": "^7.0.1"
+  },
+  "snyk": true,
+  "dependencies": {
+    "@snyk/protect": "latest"
   }
 }
