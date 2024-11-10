@@ -93,6 +93,13 @@ values of the `ext` and `profile` parameters **MUST** equal a space-separated
 > specification requires that parameter values be surrounded by quotation marks
 > (U+0022 QUOTATION MARK, "\"").
 
+In the following example, two extensions and one profile have been applied:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/vnd.api+json;ext="https://example.com/version https://example.com/bulk";profile="https://example.com/resource-timestamps"
+```
+
 #### <a href="#extension-rules" id="extension-rules" class="headerlink"></a> Rules for Extensions
 
 An extension **MAY** impose additional processing rules or further restrictions
