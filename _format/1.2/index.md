@@ -2171,10 +2171,10 @@ least one of:
 * `id`: a unique identifier for this particular occurrence of the problem.
 * `links`: a [links object][links] that **MAY** contain the following members:
   * `about`: a [link][link] that leads to further details about this
-    particular occurrence of the problem. When derefenced, this URI **SHOULD**
+    particular occurrence of the problem. When dereferenced, this URI **SHOULD**
     return a human-readable description of the error.
   * `type`: a [link][link] that identifies the type of error that this
-    particular error is an instance of. This URI **SHOULD** be dereferencable to
+    particular error is an instance of. This URI **SHOULD** be dereferenceable to
     a human-readable explanation of the general error.
 * `status`: the HTTP status code applicable to this problem, expressed as a
   string value.  This **SHOULD** be provided.
@@ -2226,7 +2226,7 @@ parsing algorithm. The resulting value might not be a string.
 > as delimiters. These issues motivate the exception that JSON:API defines above.
 
 Similarly, to serialize a query parameter into a URI, an implementation **MUST**
-use the [the `application/x-www-form-urlencoded` serializer](https://url.spec.whatwg.org/#concept-urlencoded-serializer),
+use [the `application/x-www-form-urlencoded` serializer](https://url.spec.whatwg.org/#concept-urlencoded-serializer),
 with the corresponding exception that a parameter's value — but not its name —
 may be serialized differently than that algorithm requires, provided the
 serialization does not interfere with the ability to parse back the resulting URI.
@@ -2263,7 +2263,7 @@ request as equivalent to one in which the square brackets were percent-encoded.
 [profiles]: #profiles
 [error details]: #errors
 [error object]: #error-objects
-[error objects]: #errror-objects
+[error objects]: #error-objects
 [member names]: #document-member-names
 [pagination]: #fetching-pagination
 [query parameter family]: #query-parameters-families

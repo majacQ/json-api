@@ -215,7 +215,7 @@ and writing of JSON:API documents.
   * [Yaks](https://github.com/plexus/yaks) Library for building hypermedia APIs, contains a JSON:API output format.
   * [JSONAPI::Serializers](https://github.com/fotinakis/jsonapi-serializers) provides a pure Ruby, readonly serializer implementation.
   * [JSONAPI::Realizer](https://github.com/krainboltgreene/jsonapi-realizer) provides a pure Ruby pattern for turning JSON:API requests into models (has active record support and rails instructions)
-  * [Roar](https://github.com/apotonick/roar) Renders and parses represenations of Ruby objects
+  * [Roar](https://github.com/apotonick/roar) Renders and parses representations of Ruby objects
   * [Jbuilder::JsonAPI](https://github.com/vladfaust/jbuilder-json_api) Simple & lightweight extension for Jbuilder
   * [jsonapi-rb](http://jsonapi-rb.org) Ruby library for efficiently building and consuming JSON:API documents - with Rails and Hanami integrations.
   * [fast_jsonapi](https://github.com/Netflix/fast_jsonapi) A lightning fast JSON:API serializer for Ruby Objects.
