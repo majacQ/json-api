@@ -11,7 +11,7 @@ are beyond the scope of the base JSON:API specification.
 ## <a href="#naming" id="naming" class="headerlink"></a> Naming
 
 The specification places certain [hard restrictions](http://jsonapi.org/format/#document-member-names) 
-on how members (i.e., keys) in a JSON:API document may named. To further 
+on how members (i.e., keys) in a JSON:API document may be named. To further 
 standardize member names, which is especially important when mixing profiles
 authored by different parties, the following rules are also recommended:
 
@@ -211,17 +211,17 @@ The request **SHOULD** return a status `202 Accepted` with a link in the `Conten
 ```http
 HTTP/1.1 202 Accepted
 Content-Type: application/vnd.api+json
-Content-Location: https://example.com/photos/queue-jobs/5234
+Content-Location: https://example.com/photos/jobs/5234
 
 {
   "data": {
-    "type": "queue-jobs",
+    "type": "jobs",
     "id": "5234",
     "attributes": {
       "status": "Pending request, waiting other process"
     },
     "links": {
-      "self": "/photos/queue-jobs/5234"
+      "self": "/photos/jobs/5234"
     }
   }
 }
@@ -230,26 +230,26 @@ Content-Location: https://example.com/photos/queue-jobs/5234
 To check the status of the job process, a client can send a request to the location given earlier.
 
 ```http
-GET /photos/queue-jobs/5234 HTTP/1.1
+GET /photos/jobs/5234 HTTP/1.1
 Accept: application/vnd.api+json
 ```
 
-Requests for still-pending jobs **SHOULD** return a status `200 OK`, as the server is reporting the status successfully. Optionally, the server can return a `Retry-After` header to provide guidance to the client as to how long it should wait before checking again. Recommendations to retry sooner than 1 second can be accomplised with `Retry-After: 0`.
+Requests for still-pending jobs **SHOULD** return a status `200 OK`, as the server is reporting the status successfully. Optionally, the server can return a `Retry-After` header to provide guidance to the client as to how long it should wait before checking again. Recommendations to retry sooner than 1 second can be accomplished with `Retry-After: 0`.
 
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/vnd.api+json
-Retry-After: 1
+Retry-After: 10
 
 {
   "data": {
-    "type": "queue-jobs",
+    "type": "jobs",
     "id": "5234",
     "attributes": {
       "status": "Pending request, waiting other process"
     },
     "links": {
-      "self": "/photos/queue-jobs/5234"
+      "self": "/photos/jobs/5234"
     }
   }
 }

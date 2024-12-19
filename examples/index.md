@@ -197,7 +197,7 @@ Content-Type: application/vnd.api+json
       "status": "422",
       "source": { "pointer": "/data/attributes/firstName" },
       "title":  "Invalid Attribute",
-      "detail": "First name must contain at least three characters."
+      "detail": "First name must contain at least two characters."
     }
   ]
 }
@@ -263,7 +263,7 @@ Content-Type: application/vnd.api+json
     {
       "source": { "pointer": "/data/attributes/firstName" },
       "title": "Invalid Attribute",
-      "detail": "First name must contain at least three characters."
+      "detail": "First name must contain at least two characters."
     },
     {
       "source": { "pointer": "/data/attributes/firstName" },
@@ -284,10 +284,10 @@ The `code` member of an error object contains an application-specific code
 representing the type of problem encountered. `code` is similar to `title`
 in that both identify a general type of problem (unlike `detail`, which is
 specific to the particular instance of the problem), but dealing with `code`
-is easier programatically, because the "same" `title` may appear in different
+is easier programmatically, because the "same" `title` may appear in different
 forms due to localization.
 
-For the example below, imagine the API docs specifed the following mapping:
+For the example below, imagine the API docs specified the following mapping:
 
 | Code | Problem                                                   |
 |------|-----------------------------------------------------------|
@@ -303,13 +303,13 @@ HTTP/1.1 422 Unprocessable Entity
 Content-Type: application/vnd.api+json
 
 {
-  "jsonapi": { "version": "1.0" },
+  "jsonapi": { "version": "1.1" },
   "errors": [
     {
       "code":   "123",
       "source": { "pointer": "/data/attributes/firstName" },
       "title":  "Value is too short",
-      "detail": "First name must contain at least three characters."
+      "detail": "First name must contain at least two characters."
     },
     {
       "code":   "225",

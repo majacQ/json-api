@@ -20,7 +20,7 @@ for exchanging data.
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
 "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be
 interpreted as described in RFC 2119
-[[RFC2119](http://tools.ietf.org/html/rfc2119)].
+[[RFC2119](https://tools.ietf.org/html/rfc2119)].
 
 ## <a href="#content-negotiation" id="content-negotiation" class="headerlink"></a> Content Negotiation
 
@@ -579,7 +579,7 @@ by clients and servers, and they **MUST** meet all of the following conditions:
   as defined below.
 
 To enable an easy mapping of member names to URLs, it is **RECOMMENDED** that
-member names use only non-reserved, URL safe characters specified in [RFC 3986](http://tools.ietf.org/html/rfc3986#page-13).
+member names use only non-reserved, URL safe characters specified in [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3).
 
 #### <a href="#document-member-names-allowed-characters" id="document-member-names-allowed-characters" class="headerlink"></a> Allowed Characters
 
@@ -973,7 +973,7 @@ resources.
 Multiple related resources can be requested in a comma-separated list:
 
 ```http
-GET /articles/1?include=author,comments.author HTTP/1.1
+GET /articles/1?include=comments.author,ratings HTTP/1.1
 Accept: application/vnd.api+json
 ```
 

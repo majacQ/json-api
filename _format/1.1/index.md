@@ -1,6 +1,5 @@
 ---
 version: 1.1
-status: rc
 ---
 
 ## <a href="#introduction" id="introduction" class="headerlink"></a> Introduction
@@ -50,7 +49,7 @@ The JSON:API specification supports two media type parameters: `ext` and
 
 > Note: A media type parameter is an extra piece of information that can
 accompany a media type. For example, in the header
-`Content-Type: text/html; charset="utf-8"`, the media type is `text/html` and
+`Content-Type: text/html;charset="utf-8"`, the media type is `text/html` and
 `charset` is a parameter.
 
 ### <a href="#extensions" id="extensions" class="headerlink"></a> Extensions
@@ -121,7 +120,7 @@ versioning. This member might appear as follows:
 
 ```json
 HTTP/1.1 200 OK
-Content-Type: application/vnd.api+json; ext="https://jsonapi.org/ext/version"
+Content-Type: application/vnd.api+json;ext="https://jsonapi.org/ext/version"
 
 // ...
 {
@@ -143,7 +142,7 @@ The rules for profile usage are dictated by [RFC
 A profile **MAY** define document members and processing rules that are reserved
 for implementors.
 
-A profile **MUST NOT** define any query parameters.
+A profile **MUST NOT** define any query parameters except [implementation-specific query parameters](#query-parameters-custom).
 
 A profile **MUST NOT** alter or remove processing rules that have been defined
 by this specification or by an [extension][extensions]. However, a profile
@@ -170,7 +169,7 @@ With such a profile applied, a response might appear as follows:
 
 ```json
 HTTP/1.1 200 OK
-Content-Type: application/vnd.api+json; profile="https://example.com/resource-timestamps"
+Content-Type: application/vnd.api+json;profile="https://example.com/resource-timestamps"
 
 // ...
 {
@@ -241,11 +240,13 @@ with a `415 Unsupported Media Type` status code.
   `profile` media type parameter is present.
 
 If a request's `Accept` header contains an instance of the JSON:API media type,
-servers **MUST** respond with a `406 Not Acceptable` status code if all
-instances of that media type are modified with a media type parameter other
-than `ext` or `profile`. If every instance of that media type is modified by the
-`ext` parameter and each contains at least one unsupported extension URI, the
-server **MUST** also respond with a `406 Not Acceptable`.
+servers **MUST** ignore instances of that media type which are modified by a
+media type parameter other than `ext` or `profile`. If all instances of that
+media type are modified with a media type parameter other than `ext` or `profile`,
+servers **MUST** respond with a `406 Not Acceptable` status code. If every
+instance of that media type is modified by the `ext` parameter and each contains
+at least one unsupported extension URI, the server **MUST** also respond with a
+`406 Not Acceptable`.
 
 If the `profile` parameter is received, a server **SHOULD** attempt to apply any
 requested profile(s) to its response. A server **MUST** ignore any profiles
@@ -290,17 +291,18 @@ document containing data. This object defines a document's "top level".
 
 A document **MUST** contain at least one of the following top-level members:
 
-* `data`: the document's "primary data"
-* `errors`: an array of [error objects](#errors)
+* `data`: the document's "primary data".
+* `errors`: an array of [error objects](#errors).
 * `meta`: a [meta object][meta] that contains non-standard
   meta-information.
+* a member defined by an applied [extension](#extensions).
 
 The members `data` and `errors` **MUST NOT** coexist in the same document.
 
 A document **MAY** contain any of these top-level members:
 
-* `jsonapi`: an object describing the server's implementation
-* `links`: a [links object][links] related to the primary data.
+* `jsonapi`: an object describing the server's implementation.
+* `links`: a [links object][links] related to the document as a whole.
 * `included`: an array of [resource objects] that are related to the primary
   data and/or each other ("included resources").
 
@@ -318,6 +320,15 @@ The top-level [links object][links] **MAY** contain the following members:
 * `describedby`: a [link] to a description document (e.g. OpenAPI or JSON
   Schema) for the current document.
 * [pagination] links for the primary data.
+
+> Note: The `self` link in the top-level `links` object allows a client to
+> refresh the data represented by the current response document. The client
+> should be able to use the provided link without applying any additional
+> information. Therefore the link must contain the query parameters provided
+> by the client to generate the response document. This includes but is not
+> limited to query parameters used for [inclusion of related resources][fetching resources],
+> [sparse fieldsets][fetching sparse fieldsets], [sorting][fetching sorting],
+> [pagination][fetching pagination] and [filtering][fetching filtering].
 
 The document's "primary data" is a representation of the resource or collection
 of resources targeted by a request.
@@ -451,12 +462,8 @@ The value of the `attributes` key **MUST** be an object (an "attributes
 object"). Members of the attributes object ("attributes") represent information
 about the [resource object][resource objects] in which it's defined.
 
-Attributes may contain any valid JSON value.
-
-Complex data structures involving JSON objects and arrays are allowed as
-attribute values. However, any object that constitutes or is contained in an
-attribute **MUST NOT** contain a `relationships` or `links` member, as those
-members are reserved by this specification for future use.
+Attributes may contain any valid JSON value, including complex data structures
+involving JSON objects and arrays.
 
 Keys that reference related resources (e.g. `author_id`) **SHOULD NOT** appear
 as attributes. Instead, [relationships] **SHOULD** be used.
@@ -466,11 +473,14 @@ as attributes. Instead, [relationships] **SHOULD** be used.
 ##### <a href="#document-resource-object-relationships" id="document-resource-object-relationships" class="headerlink"></a> Relationships
 
 The value of the `relationships` key **MUST** be an object (a "relationships
-object"). Members of the relationships object ("relationships") represent
-references from the [resource object][resource objects] in which it's defined to other resource
-objects.
+object"). Each member of a relationships object represents
+a "relationship" from the [resource object][resource objects]
+in which it has been defined to other resource objects.
 
 Relationships may be to-one or to-many.
+
+A relationship's name is given by its key. The value at that key **MUST** be an
+object ("relationship object").
 
 <a id="document-resource-object-relationships-relationship-object"></a>
 A "relationship object" **MUST** contain at least one of the following:
@@ -484,9 +494,11 @@ A "relationship object" **MUST** contain at least one of the following:
     for the related resources as its primary data.
     (See [Fetching Relationships](#fetching-relationships).)
   * `related`: a [related resource link]
+  * a member defined by an applied [extension](#extensions).
 * `data`: [resource linkage]
 * `meta`: a [meta object][meta] that contains non-standard meta-information about the
   relationship.
+* a member defined by an applied [extension](#extensions).
 
 A relationship object that represents a to-many relationship **MAY** also contain
 [pagination] links under the `links` member, as described below. Any
@@ -607,18 +619,15 @@ requested primary resources. Such responses are called "compound documents".
 In a compound document, all included resources **MUST** be represented as an
 array of [resource objects] in a top-level `included` member.
 
-Compound documents require "full linkage", meaning that every included
-resource **MUST** be identified by at least one [resource identifier object]
-in the same document. These resource identifier objects could either be
-primary data or represent resource linkage contained within primary or
-included resources.
+Every included resource object **MUST** be identified via a chain of
+relationships originating in a document's primary data. This means that
+compound documents require "full linkage" and that no resource object can be
+included without a direct or indirect relationship to the document's primary
+data.
 
 The only exception to the full linkage requirement is when relationship fields
-that would otherwise contain linkage data are excluded via [sparse fieldsets](#fetching-sparse-fieldsets).
-
-> Note: Full linkage ensures that included resources are related to either
-the primary data (which could be [resource objects] or [resource identifier
-objects][resource identifier object]) or to each other.
+that would otherwise contain linkage data are excluded due to
+[sparse fieldsets](#fetching-sparse-fieldsets) requested by the client.
 
 A complete example document with multiple included relationships:
 
@@ -747,8 +756,9 @@ of this member **MUST** be an object (a "links object").
 Within this object, a link **MUST** be represented as either:
 
 * a string whose value is a URI-reference [[RFC3986 Section 4.1](https://tools.ietf.org/html/rfc3986#section-4.1)]
-  pointing to the link's target.
-* a [link object].
+  pointing to the link's target,
+* a [link object] or
+* `null` if the link does not exist.
 
 A link's relation type **SHOULD** be inferred from the name of the link unless the
 link is a [link object] and the link object has a `rel` member.
@@ -820,6 +830,10 @@ The jsonapi object **MAY** contain any of the following members:
 * `profile` - an array of URIs for all applied [profiles].
 * `meta` - a [meta] object that contains non-standard meta-information.
 
+Clients and servers **MUST NOT** use an `ext` or `profile` member for content
+negotiation. Content negotiation **MUST** only happen based on media type
+parameters in `Content-Type` header.
+
 A simple example appears below:
 
 ```json
@@ -855,7 +869,7 @@ meet all of the following conditions:
   as defined below.
 
 To enable an easy mapping of member names to URLs, it is **RECOMMENDED** that
-member names use only non-reserved, URL safe characters specified in [RFC 3986](http://tools.ietf.org/html/rfc3986#page-13).
+member names use only non-reserved, URL safe characters specified in [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986#section-2.3).
 
 #### <a href="#document-member-names-allowed-characters" id="document-member-names-allowed-characters" class="headerlink"></a> Allowed Characters
 
@@ -881,8 +895,8 @@ The following characters **MUST NOT** be used in implementation and
 - U+002B PLUS SIGN, "+" _(has overloaded meaning in URL query strings)_
 - U+002C COMMA, "," _(used as a separator between relationship paths)_
 - U+002E PERIOD, "." _(used as a separator within relationship paths)_
-- U+005B LEFT SQUARE BRACKET, "[" _(used in sparse fieldsets)_
-- U+005D RIGHT SQUARE BRACKET, "]" _(used in sparse fieldsets)_
+- U+005B LEFT SQUARE BRACKET, "[" _(used in query parameter families)_
+- U+005D RIGHT SQUARE BRACKET, "]" _(used in query parameter families)_
 - U+0021 EXCLAMATION MARK, "!"
 - U+0022 QUOTATION MARK, '"'
 - U+0023 NUMBER SIGN, "#"
@@ -915,17 +929,15 @@ The following characters **MUST NOT** be used in implementation and
 
 Member names **MAY** also begin with an at sign (U+0040 COMMERCIAL AT, "@").
 Members named this way are called "@-Members". @-Members **MAY** appear
-anywhere in a JSON:API document.
+anywhere in a document.
 
-However, JSON:API processors **MUST** completely ignore @-Members (i.e. not
-treat them as JSON:API data).
-
-Moreover, the existence of @-Members **MUST** be ignored when interpreting all
-JSON:API definitions and processing instructions given outside of this
-subsection. For example, an [attribute][attributes] is defined above as any
-member of the attributes object. However, because @-Members must be ignored
-when interpreting that definition, an @-Member that occurs in an attributes
-object is not an attribute.
+This specification provides no guidance on the meaning or usage of @-Members,
+which are considered to be [implementation semantics](#semantics). @-Members
+**MUST** be ignored when interpreting this specification's definitions and
+processing instructions given outside of this subsection. For example, an
+[attribute][attributes] is defined above as any member of the attributes object.
+However, because @-Members must be ignored when interpreting that definition, an
+@-Member that occurs in an attributes object is not an attribute.
 
 > Note: Among other things, "@" members can be used to add JSON-LD data to a
 JSON:API document. Such documents should be served with [an extra header](http://www.w3.org/TR/json-ld/#interpreting-json-as-json-ld)
@@ -1279,7 +1291,7 @@ documents without including potentially unwanted intermediate resources.
 Multiple related resources can be requested in a comma-separated list:
 
 ```http
-GET /articles/1?include=author,comments.author HTTP/1.1
+GET /articles/1?include=comments.author,ratings HTTP/1.1
 Accept: application/vnd.api+json
 ```
 
@@ -1521,16 +1533,14 @@ to create a resource with a client-generated ID.
 
 ##### <a href="#crud-creating-responses-201" id="crud-creating-responses-201" class="headerlink"></a> 201 Created
 
-If a `POST` request did not include a [Client-Generated
-ID](#crud-creating-client-ids) and the requested resource has been created
-successfully, the server **MUST** return a `201 Created` status code.
+If the requested resource has been created successfully and the server changes
+the resource in any way (for example, by assigning an `id`), the server **MUST**
+return a `201 Created` response and a document that contains the resource as
+primary data.
 
 The response **SHOULD** include a `Location` header identifying the location
 of the newly created resource, in order to comply with [RFC
 7231](http://tools.ietf.org/html/rfc7231#section-6.3.2).
-
-The response **MUST** also include a document that contains the primary
-resource created.
 
 If the [resource object][resource objects] returned by the response contains a `self` key in its
 `links` member and a `Location` header is provided, the value of the `self`
@@ -1556,6 +1566,15 @@ Content-Type: application/vnd.api+json
 }
 ```
 
+A server **MAY** return a `201 Created` response with a document that contains
+no primary data if the requested resource has been created successfully and the
+server does not change the resource in any way (for example, by assigning an
+`id` or `createdAt` attribute). Other top-level members, such as [meta], could
+be included in the response document.
+
+> Note: Only servers that accept [Client-Generated
+IDs](#crud-creating-client-ids) can avoid assigning an `id` to a new resource.
+
 ##### <a href="#crud-creating-responses-202" id="crud-creating-responses-202" class="headerlink"></a> 202 Accepted
 
 If a request to create a resource has been accepted for processing, but the
@@ -1564,15 +1583,11 @@ server **MUST** return a `202 Accepted` status code.
 
 ##### <a href="#crud-creating-responses-204" id="crud-creating-responses-204" class="headerlink"></a> 204 No Content
 
-If a `POST` request *did* include a [Client-Generated
-ID](#crud-creating-client-ids) and the requested resource has been created
-successfully, the server **MUST** return either a `201 Created` status code
-and response document (as described above) or a `204 No Content` status code
-with no response document.
-
-> Note: If a `204` response is received the client should consider the resource
-object sent in the request to be accepted by the server, as if the server
-had returned it back in a `201` response.
+If the requested resource has been created successfully and the server does not
+change the resource in any way (for example, by assigning an `id` or `createdAt`
+attribute), the server **MUST** return either a `201 Created` status code and
+response document (as described above) or a `204 No Content` status code with no
+response document.
 
 ##### <a href="#crud-creating-responses-403" id="crud-creating-responses-403" class="headerlink"></a> 403 Forbidden
 
@@ -1735,31 +1750,30 @@ does not want to allow deletion of records the client has not seen.
 
 #### <a href="#crud-updating-responses" id="crud-updating-responses" class="headerlink"></a> Responses
 
+##### <a href="#crud-updating-responses-200" id="crud-updating-responses-200" class="headerlink"></a> 200 OK
+
+If a server accepts an update but also changes the targeted resource in ways
+other than those specified by the request (for example, updating the
+`updatedAt` attribute or a computed `sha`), it **MUST** return a `200 OK`
+response and a document that contains the updated resource as primary data.
+
+A server **MAY** return a `200 OK` response with a document that contains no
+primary data if an update is successful and the server does not change the
+targeted resource in ways other than those specified by the request. Other
+top-level members, such as [meta], could be included in the response document.
+
 ##### <a href="#crud-updating-responses-202" id="crud-updating-responses-202" class="headerlink"></a> 202 Accepted
 
 If an update request has been accepted for processing, but the processing
 has not been completed by the time the server responds, the server **MUST**
 return a `202 Accepted` status code.
 
-##### <a href="#crud-updating-responses-200" id="crud-updating-responses-200" class="headerlink"></a> 200 OK
-
-If a server accepts an update but also changes the resource(s) in ways other
-than those specified by the request (for example, updating the `updated-at`
-attribute or a computed `sha`), it **MUST** return a `200 OK` response. The
-response document **MUST** include a representation of the updated
-resource(s) as if a `GET` request was made to the request URL.
-
-A server **MUST** return a `200 OK` status code if an update is successful,
-the client's current fields remain up to date, and the server responds only
-with top-level [meta] data. In this case the server **MUST NOT** include a
-representation of the updated resource(s).
-
 ##### <a href="#crud-updating-responses-204" id="crud-updating-responses-204" class="headerlink"></a> 204 No Content
 
-If an update is successful and the server doesn't update any fields besides
-those provided, the server **MUST** return either a `200 OK` status code and
-response document (as described above) or a `204 No Content` status code with no
-response document.
+If an update is successful and the server doesn't change the targeted
+resource in ways other than those specified by the request, the server
+**MUST** return either a `200 OK` status code and response document (as
+described above) or a `204 No Content` status code with no response document.
 
 ##### <a href="#crud-updating-relationship-responses-403" id="crud-updating-relationship-responses-403" class="headerlink"></a> 403 Forbidden
 
@@ -1781,7 +1795,7 @@ update a resource if that update would violate other server-enforced
 constraints (such as a uniqueness constraint on a property other than `id`).
 
 A server **MUST** return `409 Conflict` when processing a `PATCH` request in
-which the resource object's `type` and `id` do not match the server's endpoint.
+which the resource object's `type` or `id` do not match the server's endpoint.
 
 A server **SHOULD** include error details and provide enough information to
 recognize the source of the conflict.
@@ -1817,8 +1831,8 @@ relationship is deleted (as a garbage collection measure).
 
 #### <a href="#crud-updating-to-one-relationships" id="crud-updating-to-one-relationships" class="headerlink"></a> Updating To-One Relationships
 
-A server **MUST** respond to `PATCH` requests to a URL from a to-one
-[relationship link][relationships] as described below.
+A to-one relationship can be updated by sending a `PATCH` request to a URL
+from a to-one [relationship link][relationships].
 
 The `PATCH` request **MUST** include a top-level member named `data` containing
 one of:
@@ -1855,8 +1869,8 @@ a successful response.
 
 #### <a href="#crud-updating-to-many-relationships" id="crud-updating-to-many-relationships" class="headerlink"></a> Updating To-Many Relationships
 
-A server **MUST** respond to `PATCH`, `POST`, and `DELETE` requests to a
-URL from a to-many [relationship link][relationships] as described below.
+A to-many relationship can be updated by sending a `PATCH`, `POST`, or
+`DELETE` request to a URL from a to-many [relationship link][relationships].
 
 For all request types, the body **MUST** contain a `data` member whose value
 is an empty array or an array of [resource identifier objects][resource identifier object].
@@ -1958,6 +1972,18 @@ server, and we are defining its semantics for JSON:API.
 
 #### <a href="#crud-updating-relationship-responses" id="crud-updating-relationship-responses" class="headerlink"></a> Responses
 
+##### <a href="#crud-updating-relationship-responses-200" id="crud-updating-relationship-responses-200" class="headerlink"></a> 200 OK
+
+If a server accepts an update but also changes the targeted relationship in
+other ways than those specified by the request, it **MUST** return a `200 OK`
+response and a document that includes the updated relationship data as its
+primary data.
+
+A server **MAY** return a `200 OK` response with a document that contains no
+primary data if an update is successful and the server does not change the
+targeted relationship in ways other than those specified by the request. Other
+top-level members, such as [meta], could be included in the response document.
+
 ##### <a href="#crud-updating-relationship-responses-202" id="crud-updating-relationship-responses-202" class="headerlink"></a> 202 Accepted
 
 If a relationship update request has been accepted for processing, but the
@@ -1966,27 +1992,16 @@ server **MUST** return a `202 Accepted` status code.
 
 ##### <a href="#crud-updating-relationship-responses-204" id="crud-updating-relationship-responses-204" class="headerlink"></a> 204 No Content
 
-A server **MUST** return a `204 No Content` status code if an update is
-successful and the representation of the resource in the request matches the
-result.
+If an update is successful and the server doesn't change the targeted
+relationship in ways other than those specified by the request, the server
+**MUST** return either a `200 OK` status code and response document (as
+described above) or a `204 No Content` status code with no response document.
 
 > Note: This is the appropriate response to a `POST` request sent to a URL
 from a to-many [relationship link][relationships] when that relationship already
 exists. It is also the appropriate response to a `DELETE` request sent to a URL
 from a to-many [relationship link][relationships] when that relationship does
 not exist.
-
-##### <a href="#crud-updating-relationship-responses-200" id="crud-updating-relationship-responses-200" class="headerlink"></a> 200 OK
-
-If a server accepts an update but also changes the targeted relationship(s)
-in other ways than those specified by the request, it **MUST** return a `200
-OK` response. The response document **MUST** include a representation of the
-updated relationship(s).
-
-A server **MUST** return a `200 OK` status code if an update is successful,
-the client's current data remain up to date, and the server responds
-only with top-level [meta] data. In this case the server **MUST NOT**
-include a representation of the updated relationship(s).
 
 ##### <a href="#crud-updating-relationship-responses-403" id="crud-updating-relationship-responses-403" class="headerlink"></a> 403 Forbidden
 
@@ -2005,8 +2020,8 @@ responses, in accordance with
 
 ### <a href="#crud-deleting" id="crud-deleting" class="headerlink"></a> Deleting Resources
 
-An individual resource can be *deleted* by making a `DELETE` request to the
-resource's URL:
+A resource can be deleted by sending a `DELETE` request to the URL
+that represents the resource:
 
 ```http
 DELETE /photos/1 HTTP/1.1
@@ -2014,6 +2029,12 @@ Accept: application/vnd.api+json
 ```
 
 #### <a href="#crud-deleting-responses" id="crud-deleting-responses" class="headerlink"></a> Responses
+
+##### <a href="#crud-deleting-responses-200" id="crud-deleting-responses-200" class="headerlink"></a> 200 OK
+
+A server **MAY** return a `200 OK` response with a document that contains no
+primary data if a deletion request is successful. Other top-level members, such
+as [meta], could be included in the response document.
 
 ##### <a href="#crud-deleting-responses-202" id="crud-deleting-responses-202" class="headerlink"></a> 202 Accepted
 
@@ -2023,13 +2044,9 @@ return a `202 Accepted` status code.
 
 ##### <a href="#crud-deleting-responses-204" id="crud-deleting-responses-204" class="headerlink"></a> 204 No Content
 
-A server **MUST** return a `204 No Content` status code if a deletion
-request is successful and no content is returned.
-
-##### <a href="#crud-deleting-responses-200" id="crud-deleting-responses-200" class="headerlink"></a> 200 OK
-
-A server **MUST** return a `200 OK` status code if a deletion request is
-successful and the server responds with only top-level [meta] data.
+If a deletion request is successful, the server **MUST** return either a `200
+OK` status code and response document (as described above) or a `204 No Content`
+status code with no response document.
 
 ##### <a href="#crud-deleting-responses-404" id="crud-deleting-responses-404" class="headerlink"></a> 404 NOT FOUND
 
@@ -2073,13 +2090,19 @@ family.
 
 A "query parameter family" is the set of all query parameters whose name starts
 with a "base name", followed by zero or more instances of empty square brackets
-(i.e. `[]`) or square-bracketed legal [member names]. The family is referred to
+(i.e. `[]`), square-bracketed legal [member names], or square-bracketed
+dot-separated lists of legal member names. The family is referred to
 by its base name.
 
 For example, the `filter` query parameter family includes parameters named:
 `filter`, `filter[x]`, `filter[]`, `filter[x][]`, `filter[][]`, `filter[x][y]`,
-etc. However, `filter[_]` is not a valid parameter name in the family, because
-`_` is not a valid [member name][member names].
+`filter[x.y]`, etc. However, `filter[_]` is not a valid parameter name in the
+family, because `_` is not a valid [member name][member names].
+
+> Note: Dot separated lists of legal member names are intended to be used for
+> relationship paths. For example, this allows filtering strategies using
+> relationship paths as defined for [sorting][fetching sorting] in query parameters
+> such as `GET /posts?sort=author.name&filter[author.status]=active`.
 
 ### <a href="#extension-query-parameters" id="extension-query-parameters" class="headerlink"></a> Extension-Specific Query Parameters
 
@@ -2099,7 +2122,7 @@ It is **RECOMMENDED** that a capital letter (e.g. camelCasing) be used to
 satisfy the above requirement.
 
 If a server encounters a query parameter that does not follow the naming
-conventions above, and the server does not know how to process it as a query
+conventions above, or the server does not know how to process it as a query
 parameter from this specification, it **MUST** return `400 Bad Request`.
 
 > Note: By forbidding the use of query parameters that contain only the characters
@@ -2132,10 +2155,10 @@ least one of:
 * `id`: a unique identifier for this particular occurrence of the problem.
 * `links`: a [links object][links] that **MAY** contain the following members:
   * `about`: a [link][link] that leads to further details about this
-    particular occurrence of the problem. When derefenced, this URI **SHOULD**
+    particular occurrence of the problem. When dereferenced, this URI **SHOULD**
     return a human-readable description of the error.
   * `type`: a [link][link] that identifies the type of error that this
-    particular error is an instance of. This URI **SHOULD** be dereferencable to
+    particular error is an instance of. This URI **SHOULD** be dereferenceable to
     a human-readable explanation of the general error.
 * `status`: the HTTP status code applicable to this problem, expressed as a
   string value.  This **SHOULD** be provided.
@@ -2187,7 +2210,7 @@ parsing algorithm. The resulting value might not be a string.
 > as delimiters. These issues motivate the exception that JSON:API defines above.
 
 Similarly, to serialize a query parameter into a URI, an implementation **MUST**
-use the [the `application/x-www-form-urlencoded` serializer](https://url.spec.whatwg.org/#concept-urlencoded-serializer),
+use [the `application/x-www-form-urlencoded` serializer](https://url.spec.whatwg.org/#concept-urlencoded-serializer),
 with the corresponding exception that a parameter's value — but not its name —
 may be serialized differently than that algorithm requires, provided the
 serialization does not interfere with the ability to parse back the resulting URI.
@@ -2224,7 +2247,7 @@ request as equivalent to one in which the square brackets were percent-encoded.
 [profiles]: #profiles
 [error details]: #errors
 [error object]: #error-objects
-[error objects]: #errror-objects
+[error objects]: #error-objects
 [member names]: #document-member-names
 [pagination]: #fetching-pagination
 [query parameter family]: #query-parameters-families
